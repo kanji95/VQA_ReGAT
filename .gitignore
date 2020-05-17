@@ -3,6 +3,7 @@ saved_models/
 pretrained_models/
 gt_logits/
 .vscode/
+slurm*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
