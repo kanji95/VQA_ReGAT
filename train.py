@@ -11,6 +11,7 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import autograd
 from torch.autograd import Variable
 import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
@@ -95,6 +96,8 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                 optim.zero_grad()
                 mini_batch_count = batch_multiplier
 
+            ### Debugging ###
+            # with autograd.detect_anomaly():
             v = Variable(v).to(device)
             norm_bb = Variable(norm_bb).to(device)
             q = Variable(q).to(device)
@@ -104,11 +107,12 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                 args.nongt_dim, args.imp_pos_emb_dim, args.spa_label_num,
                 args.sem_label_num, device)
             pred, att = model(v, norm_bb, q, pos_emb, sem_adj_matrix,
-                              spa_adj_matrix, target)
+                                  spa_adj_matrix, target)
             loss = instance_bce_with_logits(pred, target)
 
             loss /= batch_multiplier
             loss.backward()
+
             mini_batch_count -= 1
             total_norm += nn.utils.clip_grad_norm_(model.parameters(),
                                                    args.grad_clip)

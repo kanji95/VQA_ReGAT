@@ -12,7 +12,7 @@
     "output": "saved_models/",
     "log_interval": -1,
     "dataset": "vqa_cp",
-    "data_folder": "./data",
+    "data_folder": "/ssd_scratch/cvit/kanishk/vqa",
     "use_both": false,
     "use_vg": false,
     "adaptive": true,

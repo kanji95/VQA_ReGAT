@@ -3,7 +3,7 @@
     "base_lr": 1e-3,
     "batch_size": 64,
     "checkpoint": "",
-    "data_folder": "./data",
+    "data_folder": "/ssd_scratch/cvit/kanishk/vqa",
     "dataset": "vqa",
     "dir_num": 2,
     "epochs": 20,

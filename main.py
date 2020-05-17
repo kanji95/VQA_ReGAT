@@ -37,7 +37,7 @@ def parse_args():
     parser.add_argument('--grad_accu_steps', type=int, default=1)
     parser.add_argument('--grad_clip', type=float, default=0.25)
     parser.add_argument('--weight_decay', type=float, default=0)
-    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--output', type=str, default='saved_models/')
     parser.add_argument('--save_optim', action='store_true',
                         help='save optimizer')
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     weights = None
     if args.tfidf:
         tfidf, weights = tfidf_from_questions(['train', 'val', 'test2015'],
-                                              dictionary)
+                                              dictionary, dataroot=args.data_folder)
     model.w_emb.init_embedding(join(args.data_folder,
                                     'glove/glove6b_init_300d.npy'),
                                tfidf, weights)
