@@ -55,7 +55,7 @@ def parse_args():
     '''
     parser.add_argument('--dataset', type=str, default='vqa',
                         choices=["vqa", "vqa_cp"])
-    parser.add_argument('--data_folder', type=str, default='./data')
+    parser.add_argument('--data_folder', type=str, default='/share3/kanishk/vqa')
     parser.add_argument('--use_both', action='store_true',
                         help='use both train/val datasets to train?')
     parser.add_argument('--use_vg', action='store_true',
