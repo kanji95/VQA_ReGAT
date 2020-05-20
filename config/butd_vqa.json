@@ -2,7 +2,7 @@
     "adaptive": true,
     "base_lr": 1e-3,
     "batch_size": 64,
-    "checkpoint": "",
+    "checkpoint": "/home/kanishk/vqa/VQA_ReGAT/saved_models/regat_implicit/butd_implicit_vqa_4992/model_16.pth",
     "data_folder": "/ssd_scratch/cvit/kanishk/vqa",
     "dataset": "vqa",
     "dir_num": 2,

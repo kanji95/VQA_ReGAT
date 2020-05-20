@@ -4,7 +4,7 @@
 #SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=3000
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 #SBATCH --time=2-00:00:00
 #SBATCH --job-name=vqa_regat
 #SBATCH --mail-user=kanishk.jain@alumni.iiit.ac.in
@@ -27,5 +27,6 @@ else
     echo "copied features from scratch3"
 fi
 
+python3 main.py --config config/ban_vqa.json
 #python3 main.py --config config/butd_vqa.json
-python3 eval.py --output_folder pretrained_models/regat_implicit/ban_1_implicit_vqa_196
+#python3 eval.py --output_folder pretrained_models/regat_implicit/ban_1_implicit_vqa_196

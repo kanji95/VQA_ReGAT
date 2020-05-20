@@ -132,7 +132,7 @@ def parse_args():
     '''
     For dataset
     '''
-    parser.add_argument('--data_folder', type=str, default='./data')
+    parser.add_argument('--data_folder', type=str, default='/ssd_scratch/cvit/kanishk/vqa')
     parser.add_argument('--dataset', type=str, default='vqa',
                         choices=["vqa", "vqa_cp"])
     parser.add_argument('--split', type=str, default="val",
