@@ -19,7 +19,7 @@ from model.classifier import SimpleClassifier
 
 
 class ReGAT(nn.Module):
-    def __init__(self, dataset, w_emb, q_emb, q_att, v_relation,
+    def __init__(self, dataset, w_emb, q_emb, q_att, q_relation, v_relation,
                  joint_embedding, classifier, glimpse, fusion, relation_type):
         super(ReGAT, self).__init__()
         self.name = "ReGAT_%s_%s" % (relation_type, fusion)
@@ -30,6 +30,7 @@ class ReGAT(nn.Module):
         self.w_emb = w_emb
         self.q_emb = q_emb
         self.q_att = q_att
+        self.q_relation = q_relation
         self.v_relation = v_relation
         self.joint_embedding = joint_embedding
         self.classifier = classifier
@@ -56,6 +57,8 @@ class ReGAT(nn.Module):
         elif self.relation_type == "spatial":
             v_emb = self.v_relation.forward(v, spa_adj_matrix, q_emb_self_att)
         else:  # implicit
+            q_emb_seq = self.q_relation.forward(q_emb_seq, implicit_pos_emb, 
+                                                q_emb_self_att)
             v_emb = self.v_relation.forward(v, implicit_pos_emb,
                                             q_emb_self_att)
 
@@ -81,6 +84,7 @@ def build_regat(dataset, args):
                               args.num_hid, 1, False, .0)
     q_att = QuestionSelfAttention(args.num_hid, .2)
 
+    q_relation = None
     if args.relation_type == "semantic":
         v_relation = ExplicitRelationEncoder(
                         dataset.v_dim, args.num_hid, args.relation_dim,
@@ -98,6 +102,15 @@ def build_regat(dataset, args):
                         residual_connection=args.residual_connection,
                         label_bias=args.label_bias)
     else:
+        # dataset.v_dim = 2048, args.num_hid = 1024, args.relation_dim = 1024, args.dir_num = 2, args.imp_pos_emb_dim = 64, args.nongt_dim = 20,
+        # args.num_heads = 16, args.num_steps = 1, args.residual_connection = true, args.label_bias = false
+        q_relation = ImplicitRelationEncoder(
+                        args.num_hid, args.num_hid, args.relation_dim,
+                        args.dir_num, args.imp_pos_emb_dim, args.nonwd_dim,
+                        num_heads=args.num_heads, num_steps=args.num_steps,
+                        residual_connection=args.residual_connection,
+                        label_bias=args.label_bias)
+        
         v_relation = ImplicitRelationEncoder(
                         dataset.v_dim, args.num_hid, args.relation_dim,
                         args.dir_num, args.imp_pos_emb_dim, args.nongt_dim,
@@ -118,5 +131,5 @@ def build_regat(dataset, args):
                                 dataset.num_ans_candidates, args.mutan_gamma)
         gamma = args.mutan_gamma
         classifier = None
-    return ReGAT(dataset, w_emb, q_emb, q_att, v_relation, joint_embedding,
+    return ReGAT(dataset, w_emb, q_emb, q_att, q_relation, v_relation, joint_embedding,
                  classifier, gamma, args.fusion, args.relation_type)

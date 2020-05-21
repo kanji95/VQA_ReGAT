@@ -100,6 +100,8 @@ def parse_args():
                         help='relation feature dim')
     parser.add_argument('--nongt_dim', type=int, default=20,
                         help='number of objects consider relations per image')
+    parser.add_argument('--nonwd_dim', type=int, default=4,
+                        help='number of words consider relations per question')
     parser.add_argument('--num_heads', type=int, default=16,
                         help='number of attention heads \
                               for multi-head attention')
