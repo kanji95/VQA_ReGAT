@@ -49,6 +49,7 @@ class ReGAT(nn.Module):
         w_emb = self.w_emb(q)
         q_emb_seq = self.q_emb.forward_all(w_emb)  # [batch, q_len, q_dim]
         q_emb_self_att = self.q_att(q_emb_seq)
+        print(f'w_emb: {w_emb.shape}, q_emb_seq: {q_emb_seq.shape}, q_emb_self_att: {q_emb_self_att.shape}', flush=True)        
 
         # [batch_size, num_rois, out_dim]
         if self.relation_type == "semantic":
@@ -70,6 +71,7 @@ class ReGAT(nn.Module):
             logits = self.classifier(joint_emb)
         else:
             logits = joint_emb
+        print(f'logits: {logits.shape}, att: {att.shape}', flush=True)
         return logits, att
 
 
