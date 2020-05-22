@@ -18,6 +18,8 @@ set -e
 
 if [ -d "/ssd_scratch/cvit/kanishk/vqa" ]; then
     echo "folder exists, proceed with training"
+    scp -r kanishk@ada:/share3/kanishk/vqa/train_question_type.json /ssd_scratch/cvit/kanishk/vqa/
+    scp -r kanishk@ada:/share3/kanishk/vqa/val_question_type.json /ssd_scratch/cvit/kanishk/vqa/
 else
     mkdir -p /ssd_scratch/cvit/kanishk/
     rm -rf /ssd_scratch/cvit/kanishk/*

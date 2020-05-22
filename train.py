@@ -101,6 +101,7 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
             v = Variable(v).to(device)
             norm_bb = Variable(norm_bb).to(device)
             q = Variable(q).to(device)
+            q_target = Variable(q_target).to(device)
             target = Variable(target).to(device)
             pos_emb, sem_adj_matrix, spa_adj_matrix = prepare_graph_variables(
                 relation_type, bb, sem_adj_matrix, spa_adj_matrix, num_objects,

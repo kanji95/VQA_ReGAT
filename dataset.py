@@ -127,7 +127,8 @@ def _load_dataset(dataroot, name, img_id2val, label2ans):
         (name + '2014' if 'test' != name[:4] else name))
     questions = sorted(json.load(open(question_path))['questions'],
                        key=lambda x: x['question_id'])
-    question_type = json.load(os.path.join(dataroot, f'{name}_question_type.json'))
+    
+    question_type = json.load(open(os.path.join(dataroot, f'{name}_question_type.json')))
     
     q_types = ['yes/no', 'number', 'other']
     
@@ -143,7 +144,7 @@ def _load_dataset(dataroot, name, img_id2val, label2ans):
             utils.assert_eq(question['question_id'], answer['question_id'])
             utils.assert_eq(question['image_id'], answer['image_id'])
             img_id = question['image_id']
-            q_type = q_types.index(question_type[question['question_id']])
+            q_type = q_types.index(question_type[str(question['question_id'])])
             question['question_type'] = q_type
             
             if not COUNTING_ONLY \
@@ -361,7 +362,6 @@ class VQAFeatureDataset(Dataset):
 
         question = entry['q_token']
         question_id = entry['question_id']
-        question_type = entry['question_type']
         
         if self.spatial_adj_matrix is not None:
             spatial_adj_matrix = self.spatial_adj_matrix[entry["image"]]
@@ -392,9 +392,14 @@ class VQAFeatureDataset(Dataset):
             labels = answer['labels']
             scores = answer['scores']
             target = torch.zeros(self.num_ans_candidates)
+            
+            question_type = entry['question_type']
+            question_target = torch.zeros(3)
+            question_target[question_type] = 1
+
             if labels is not None:
                 target.scatter_(0, labels, scores)
-            return features, normalized_bb, question, question_type, target,\
+            return features, normalized_bb, question, question_target, target,\
                 question_id, image_id, bb, spatial_adj_matrix,\
                 semantic_adj_matrix
 
