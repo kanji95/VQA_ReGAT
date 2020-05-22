@@ -87,7 +87,7 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
 
         mini_batch_count = 0
         batch_multiplier = args.grad_accu_steps
-        for i, (v, norm_bb, q, target, _, _, bb, spa_adj_matrix,
+        for i, (v, norm_bb, q, q_target, target, _, _, bb, spa_adj_matrix,
                 sem_adj_matrix) in enumerate(train_loader):
             batch_size = v.size(0)
             num_objects = v.size(1)
@@ -106,9 +106,9 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                 relation_type, bb, sem_adj_matrix, spa_adj_matrix, num_objects,
                 args.nongt_dim, args.imp_pos_emb_dim, args.spa_label_num,
                 args.sem_label_num, device)
-            pred, att = model(v, norm_bb, q, pos_emb, sem_adj_matrix,
+            q_type, pred, att = model(v, norm_bb, q, pos_emb, sem_adj_matrix,
                                   spa_adj_matrix, target)
-            loss = instance_bce_with_logits(pred, target)
+            loss = instance_bce_with_logits(pred, target) + instance_bce_with_logits(q_type, q_target)
 
             loss /= batch_multiplier
             loss.backward()
@@ -178,7 +178,7 @@ def evaluate(model, dataloader, device, args):
         entropy = torch.Tensor(model.module.glimpse).zero_().to(device)
     pbar = tqdm(total=len(dataloader))
 
-    for i, (v, norm_bb, q, target, _, _, bb, spa_adj_matrix,
+    for i, (v, norm_bb, q, q_target, target, _, _, bb, spa_adj_matrix,
             sem_adj_matrix) in enumerate(dataloader):
         batch_size = v.size(0)
         num_objects = v.size(1)
@@ -191,7 +191,7 @@ def evaluate(model, dataloader, device, args):
             relation_type, bb, sem_adj_matrix, spa_adj_matrix, num_objects,
             args.nongt_dim, args.imp_pos_emb_dim, args.spa_label_num,
             args.sem_label_num, device)
-        pred, att = model(v, norm_bb, q, pos_emb, sem_adj_matrix,
+        q_type, pred, att = model(v, norm_bb, q, pos_emb, sem_adj_matrix,
                           spa_adj_matrix, target)
         batch_score = compute_score_with_logits(
                         pred, target, device).sum()

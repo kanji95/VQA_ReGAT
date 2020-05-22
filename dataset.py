@@ -109,6 +109,7 @@ def _create_entry(img, question, answer):
         'image_id': question['image_id'],
         'image': img,
         'question': question['question'],
+        'question_type': question['question_type'],
         'answer': answer}
     return entry
 
@@ -126,6 +127,10 @@ def _load_dataset(dataroot, name, img_id2val, label2ans):
         (name + '2014' if 'test' != name[:4] else name))
     questions = sorted(json.load(open(question_path))['questions'],
                        key=lambda x: x['question_id'])
+    question_type = json.load(os.path.join(dataroot, f'{name}_question_type.json'))
+    
+    q_types = ['yes/no', 'number', 'other']
+    
     # train, val
     if 'test' != name[:4]:
         answer_path = os.path.join(dataroot, 'cache', '%s_target.pkl' % name)
@@ -138,6 +143,9 @@ def _load_dataset(dataroot, name, img_id2val, label2ans):
             utils.assert_eq(question['question_id'], answer['question_id'])
             utils.assert_eq(question['image_id'], answer['image_id'])
             img_id = question['image_id']
+            q_type = q_types.index(question_type[question['question_id']])
+            question['question_type'] = q_type
+            
             if not COUNTING_ONLY \
                or is_howmany(question['question'], answer, label2ans):
                 entries.append(_create_entry(img_id2val[img_id],
@@ -353,6 +361,8 @@ class VQAFeatureDataset(Dataset):
 
         question = entry['q_token']
         question_id = entry['question_id']
+        question_type = entry['question_type']
+        
         if self.spatial_adj_matrix is not None:
             spatial_adj_matrix = self.spatial_adj_matrix[entry["image"]]
         else:
@@ -384,12 +394,12 @@ class VQAFeatureDataset(Dataset):
             target = torch.zeros(self.num_ans_candidates)
             if labels is not None:
                 target.scatter_(0, labels, scores)
-            return features, normalized_bb, question, target,\
+            return features, normalized_bb, question, question_type, target,\
                 question_id, image_id, bb, spatial_adj_matrix,\
                 semantic_adj_matrix
 
         else:
-            return features, normalized_bb, question, question_id,\
+            return features, normalized_bb, question, question_id, question_id,\
                 question_id, image_id, bb, spatial_adj_matrix,\
                 semantic_adj_matrix
 

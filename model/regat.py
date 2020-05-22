@@ -20,7 +20,7 @@ from model.classifier import SimpleClassifier
 
 class ReGAT(nn.Module):
     def __init__(self, dataset, w_emb, q_emb, q_att, v_relation,
-                 joint_embedding, classifier, glimpse, fusion, relation_type):
+                 joint_embedding, count_embedding, classifier, q_classifier, glimpse, fusion, relation_type):
         super(ReGAT, self).__init__()
         self.name = "ReGAT_%s_%s" % (relation_type, fusion)
         self.relation_type = relation_type
@@ -32,7 +32,9 @@ class ReGAT(nn.Module):
         self.q_att = q_att
         self.v_relation = v_relation
         self.joint_embedding = joint_embedding
+        self.count_embedding = count_embedding
         self.classifier = classifier
+        self.q_classifier = q_classifier
 
     def forward(self, v, b, q, implicit_pos_emb, sem_adj_matrix,
                 spa_adj_matrix, labels):
@@ -46,10 +48,15 @@ class ReGAT(nn.Module):
 
         return: logits, not probs
         """
+        batch_size = v.shape[0]
+        
         w_emb = self.w_emb(q)
         q_emb_seq = self.q_emb.forward_all(w_emb)  # [batch, q_len, q_dim]
         q_emb_self_att = self.q_att(q_emb_seq)
-        print(f'w_emb: {w_emb.shape}, q_emb_seq: {q_emb_seq.shape}, q_emb_self_att: {q_emb_self_att.shape}', flush=True)        
+        
+        q_type = self.q_classifier(q_emb_self_att)
+        
+        # print(f'w_emb: {w_emb.shape}, q_emb_seq: {q_emb_seq.shape}, q_emb_self_att: {q_emb_self_att.shape}', flush=True)
 
         # [batch_size, num_rois, out_dim]
         if self.relation_type == "semantic":
@@ -62,6 +69,12 @@ class ReGAT(nn.Module):
 
         if self.fusion == "ban":
             joint_emb, att = self.joint_embedding(v_emb, q_emb_seq, b)
+            count_emb, count_att = self.count_embedding(v_emb, q_emb_seq, b)
+            
+            _, indices = torch.max(q_type, dim=1)
+            embeddings = torch.stack([joint_emb, count_emb, joint_emb], dim=1)
+            joint_emb = embeddings[torch.arange(batch_size), indices]
+            
         elif self.fusion == "butd":
             q_emb = self.q_emb(w_emb)  # [batch, q_dim]
             joint_emb, att = self.joint_embedding(v_emb, q_emb)
@@ -71,8 +84,8 @@ class ReGAT(nn.Module):
             logits = self.classifier(joint_emb)
         else:
             logits = joint_emb
-        print(f'logits: {logits.shape}, att: {att.shape}', flush=True)
-        return logits, att
+        # print(f'logits: {logits.shape}, att: {att.shape}', flush=True)
+        return q_type, logits, att
 
 
 def build_regat(dataset, args):
@@ -112,9 +125,13 @@ def build_regat(dataset, args):
 
     classifier = SimpleClassifier(args.num_hid, args.num_hid * 2,
                                   dataset.num_ans_candidates, 0.5)
+    q_classifier = SimpleClassifier(args.num_hid, args.num_hid // 2, 3, 0.5)
+    
     gamma = 0
+    count_embedding = None
     if args.fusion == "ban":
-        joint_embedding = BAN(args.relation_dim, args.num_hid, args.ban_gamma)
+        joint_embedding = BAN(args.relation_dim, args.num_hid, args.ban_gamma, use_counter=False)
+        count_embedding = BAN(args.relation_dim, args.num_hid, args.ban_gamma, use_counter=True)
         gamma = args.ban_gamma
     elif args.fusion == "butd":
         joint_embedding = BUTD(args.relation_dim, args.num_hid, args.num_hid)
@@ -123,5 +140,5 @@ def build_regat(dataset, args):
                                 dataset.num_ans_candidates, args.mutan_gamma)
         gamma = args.mutan_gamma
         classifier = None
-    return ReGAT(dataset, w_emb, q_emb, q_att, v_relation, joint_embedding,
-                 classifier, gamma, args.fusion, args.relation_type)
+    return ReGAT(dataset, w_emb, q_emb, q_att, v_relation, joint_embedding, count_embedding,
+                 classifier, q_classifier, gamma, args.fusion, args.relation_type)
