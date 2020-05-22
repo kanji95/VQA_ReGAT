@@ -113,12 +113,12 @@ if __name__ == '__main__':
     device = torch.device("cpu")
     batch_size = args.batch_size*n_device
 
-    # dictionary = Dictionary.load_from_file(
-    #                 join(args.data_folder, 'glove/dictionary.pkl'))
-    # val_dset = VQAFeatureDataset(
-    #             'val', dictionary, args.relation_type, adaptive=args.adaptive,
-    #             pos_emb_dim=args.imp_pos_emb_dim, dataroot=args.data_folder)
+    dictionary = Dictionary.load_from_file(
+                    join(args.data_folder, 'glove/dictionary.pkl'))
+    val_dset = VQAFeatureDataset(
+                'val', dictionary, args.relation_type, adaptive=args.adaptive,
+                pos_emb_dim=args.imp_pos_emb_dim, dataroot=args.data_folder)
 
     model = build_regat(val_dset, args)
 
-    print(val_dset)
+    print(model)
