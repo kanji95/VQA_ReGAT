@@ -33,6 +33,7 @@ def _create_entry(img, question, answer):
         'image': img,
         'coco_split': question["coco_split"],
         'question': question['question'],
+        'question_type': question['question_type'],
         'answer': answer}
     return entry
 
@@ -50,6 +51,11 @@ def _load_dataset(dataroot, name, coco_train_img_id2val, coco_val_img_id2val,
         dataroot, 'cp_v2_questions/vqacp_v2_%s_questions.json' % name)
     questions = sorted(json.load(open(question_path)),
                        key=lambda x: x['question_id'])
+    
+    question_type = json.load(open(os.path.join(dataroot, f'{name}_question_type.json')))
+    
+    q_types = ['yes/no', 'number', 'other']
+    
     answer_path = os.path.join(dataroot, 'cache', 'cp_v2_%s_target.pkl' % name)
     answers = pickle.load(open(answer_path, 'rb'))
     answers = sorted(answers, key=lambda x: x['question_id'])
@@ -60,6 +66,10 @@ def _load_dataset(dataroot, name, coco_train_img_id2val, coco_val_img_id2val,
         utils.assert_eq(question['question_id'], answer['question_id'])
         utils.assert_eq(question['image_id'], answer['image_id'])
         img_id = question['image_id']
+        
+        q_type = q_types.index(question_type[str(question['question_id'])])
+        question['question_type'] = q_type
+            
         coco_split = question["coco_split"]
         index = coco_train_img_id2val[img_id]\
             if coco_split == "train2014" else coco_val_img_id2val[img_id]
@@ -203,6 +213,8 @@ class VQA_cp_Dataset(Dataset):
 
         question = entry['q_token']
         question_id = entry['question_id']
+        question_type = entry['question_type']
+        
         if "train" in coco_split:
             coco_features = self.coco_train_features
         elif "val" in coco_split:
@@ -245,13 +257,18 @@ class VQA_cp_Dataset(Dataset):
             labels = answer['labels']
             scores = answer['scores']
             target = torch.zeros(self.num_ans_candidates)
+            
+            question_type = entry['question_type']
+            question_target = torch.zeros(3)
+            question_target[question_type] = 1
+            
             if labels is not None:
                 target.scatter_(0, labels, scores)
-            return features, spatials, question, target, question_id,\
+            return features, spatials, question, question_target, target, question_id,\
                 image_id, bb, spatial_adj_matrix, semantic_adj_matrix
 
         else:
-            return features, spatials, question, question_id, question_id,\
+            return features, spatials, question, question_id, question_id, question_id,\
                 image_id, bb, spatial_adj_matrix, semantic_adj_matrix
 
     def __len__(self):
